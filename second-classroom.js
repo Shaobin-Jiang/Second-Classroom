@@ -1,7 +1,7 @@
 /*
     Author: Jiang Shaobin (姜绍彬), Falculty of Psychology, Beijing Normal University
-    Date: 
-    Version: 1.0.0-beta
+    Date: Sept 1st, 2021
+    Version: 1.0.1
 */
 
 /*
@@ -14,7 +14,7 @@
     pkg -t win second-classroom.js
 */
 
-const VERSION = '1.0.0-beta';
+const VERSION = '1.0.1';
 
 const fs = require('fs');
 const process = require('process');
@@ -68,7 +68,9 @@ switch (ACTION) {
                 }
             }
             else {
+                var parseActivityBar = new progress('Parsing activities: [:bar] :percent', { total: 1, width: 100, complete: '=' });
                 RegisterActivity(process.argv[3]);
+                parseActivityBar.tick(1);
             }
         }
         break;
@@ -103,11 +105,10 @@ function GenerateStudentInfo(excelFilePath) {
         var studentInfoObject = new Object();
         var bar = new progress('Generating student-info.json: [:bar] :percent', { total: excelFileContent.length, width: 100, complete: '=' });
         for (let i = 1; i < excelFileContent.length; i++) {
-            // console.log(excelFileContent[i]);
             studentInfoObject[excelFileContent[i][0]] = {
                 'name': excelFileContent[i][1],
-                'class': excelFileContent[i][2],
-                'grade': excelFileContent[i][3]
+                'class': excelFileContent[i][2] * 1,
+                'grade': excelFileContent[i][3] * 1
             }
             bar.tick(1);
         }
@@ -137,7 +138,7 @@ function RegisterActivity(excelFilePath) {
         let host = fileContent[0].data[1];
         // Check whether the name of the activity awaiting registration is the same as an existing one
         if (fs.existsSync(path.resolve(ACTIVITYJSONPATH, host[0] + '.json'))) {
-            console.log('[Warning] Activity \'' + host[0] + '\' has already been registered!');
+            console.log('\n[Warning] Activity \'' + host[0] + '\' has already been registered!');
             return;
         }
         let participant = fileContent[1].data;
@@ -152,9 +153,12 @@ function RegisterActivity(excelFilePath) {
         };
         activityObject.data = [];
         for (let i = 1; i < participant.length; i++) {
+            if (participant[i].length === 0) {
+                continue;
+            }
             let id = participant[i][3];
             // Use == instead of === here to avoid errors in such occasions as class being specified as numeric in excel and string here
-            if ((id in studentInfo) && (studentInfo[id].name === participant[i][2]) && (studentInfo[id].class === participant[i][1]) && (studentInfo[id].grade === participant[i][0])) {
+            if ((id in studentInfo) && (studentInfo[id].name == participant[i][2]) && (studentInfo[id].class == participant[i][1]) && (studentInfo[id].grade == participant[i][0])) {
                 activityObject.data.push({
                     '0': participant[i][2],
                     '1': id,
@@ -165,7 +169,7 @@ function RegisterActivity(excelFilePath) {
             }
             else {
                 makeFile = false;
-                parseActivityBar.interrupt('[Error] File ' + excelFilePath + 'Cannot find student named ' + participant[i][2] + ', student id of ' + id + ', line' + (i + 1) + ' in the current student information page.');
+                parseActivityBar.interrupt('[Error] File ' + excelFilePath + '\tCannot find student named ' + participant[i][2] + ', student id of ' + id + ', line' + (i + 1) + ' in the current student information page.');
             }
         }
 
@@ -187,7 +191,7 @@ function GetStudentInfo() {
         return JSON.parse(fs.readFileSync(STUDENTINFOPATH, 'utf-8'));
     }
     else {
-        console.log('[Error] Cannot find studentID.json in the core folder!');
+        console.log('[Error] Cannot find student-info.json in the core folder!');
         return undefined;
     }
 }
@@ -348,11 +352,22 @@ function BubbleSort(arr) {
 }
 
 function GenerateXlsxFiles() {
+    var activityFileList = fs.readdirSync(ACTIVITYJSONPATH);
+    if (activityFileList.length === 0) {
+        console.log('[Error] Folder \'Activities\' is currently empty!');
+        return false;
+    }
     console.log('[Second Classroom] Starting to generate xlsx files...');
+    var activityBar = new progress('Parsing activities: [:bar] :percent', { total: activityFileList.length, width: 100, complete: '=' });
+    for (let file in activityFileList) {
+        ParseActivity(path.resolve(ACTIVITYJSONPATH, activityFileList[file]));
+        activityBar.tick(1);
+    }
+
     const dateStr = new Date();
     // Use the current year to calculate what grades xlsx files need to be generated for
     // For example, in [2020.9, 2021.9), xlsx files will be generated for grades 2017-2020 only
-    const minGrade = (dateStr.getMonth() >= 9) ? dateStr.getFullYear() : (dateStr.getFullYear() - 1);
+    const minGrade = (dateStr.getMonth() + 1 >= 9) ? dateStr.getFullYear() : (dateStr.getFullYear() - 1);
     const grades = [minGrade - 3, minGrade - 2, minGrade - 1, minGrade];
 
     var xlsxData = {};
@@ -363,13 +378,20 @@ function GenerateXlsxFiles() {
     }
 
     for (let key in dataObject) {
-        xlsxData[dataObject[key].grade].push(dataObject[key]);
-        maxEventNumber[dataObject[key].grade] = Math.max(dataObject[key].activity.length, maxEventNumber[dataObject[key].grade]);
+        if (dataObject[key].grade * 1 >= minGrade - 3 && dataObject[key].grade * 1 <= minGrade) {
+            xlsxData[dataObject[key].grade].push(dataObject[key]);
+            maxEventNumber[dataObject[key].grade] = Math.max(dataObject[key].activity.length, maxEventNumber[dataObject[key].grade]);
+        }
     }
 
     var excelBuilder = [];
     for (let grade of grades) {
-        let data = Sort(xlsxData[grade]);
+        // Calculate the total score for each person and then sort it
+        let data = xlsxData[grade];
+        for (let j = 0; j < data.length; j++) {
+            data[j].totalScore = data[j].workScore * 1 + data[j].activityScore * 1;
+        }
+        data = Sort(xlsxData[grade]);
         let excelData = MakeXlsxFile(data, grade + '', maxEventNumber[grade]);
         excelBuilder.push(excelData);
     }
@@ -378,24 +400,22 @@ function GenerateXlsxFiles() {
     console.log('[Second Classroom] Finished generating xlsx files.');
 
     function Sort(arr) {
-        var i = arr.length, j;
         var tempExchangVal;
-        while (i > 0) {
-            for (j = 0; j < i - 1; j++) {
-                if (arr[j].totalScore > arr[j + 1].totalScore) {
-                    tempExchangVal = arr[j];
-                    arr[j] = arr[j + 1];
-                    arr[j + 1] = tempExchangVal;
+        for (let i = 0; i < arr.length; i++) {
+            for (let j = i + 1; j < arr.length; j++) {
+                if (arr[i].totalScore < arr[j].totalScore) {
+                    tempExchangVal = arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = tempExchangVal;
                 }
             }
-            i--;
         }
-        return arr.reverse();
+        return arr;
     }
 }
 
 function MakeXlsxFile(data, grade, maxEventNumber) {
-    var range = [{ s: { c: 8, r: 0 }, e: { c: 13, r: 0 } }, { s: { c: 14, r: 0 }, e: { c: 13 + maxEventNumber * 2, r: 0 } }];
+    var range = [{ s: { c: 8, r: 0 }, e: { c: 13, r: 0 } }, { s: { c: 14, r: 0 }, e: { c: 13 + Math.max(maxEventNumber * 2, 1), r: 0 } }];
     for (let n = 0; n < 8; n++) {
         range.push({ s: { c: n, r: 0 }, e: { c: n, r: 1 } });
     }
