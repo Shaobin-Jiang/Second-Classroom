@@ -1,7 +1,7 @@
 /*
     Author: Jiang Shaobin (姜绍彬), Falculty of Psychology, Beijing Normal University
     Date: Sept 1st, 2021
-    Version: 1.0.1
+    Version: 1.1.0
 */
 
 /*
@@ -14,7 +14,7 @@
     pkg -t win second-classroom.js
 */
 
-const VERSION = '1.0.1';
+const VERSION = '1.1.0';
 
 const fs = require('fs');
 const process = require('process');
@@ -26,10 +26,12 @@ const progress = require('progress');
 
 /*
     The desired action of the user:
+    -e    Generating the eventual .xlsx file
+    -h    Helping information
     -i    Generating the student-info.json file
     -r    Registering an activity or multiple activities
     -v    Version info
-    -z    Generating and zipping the eventual .docx files
+    -w    Generating the eventual .docx files
 */
 const ACTION = process.argv[2];
 const STUDENTINFOPATH = path.resolve('core', 'student-info.json'); // Path to the student info json file
@@ -50,6 +52,19 @@ switch (ACTION) {
             var dataObject = InitializeDataObject(); // Containing all the information of students and activities
             GenerateXlsxFiles();
         }
+        break;
+    case '-h':
+        console.log(`
+Need a little help? Check the commands below!
+
+    The desired action of the user:
+    -e    Generating the eventual .xlsx file
+    -h    Helping information
+    -i    Generating the student-info.json file
+    -r    Registering an activity or multiple activities
+    -v    Version info
+    -w    Generating the eventual .docx files
+`);
         break;
     case '-i':
         GenerateStudentInfo(process.argv[3]);
@@ -75,7 +90,7 @@ switch (ACTION) {
         }
         break;
     case '-v':
-        console.log('Second Classroom - version ' + VERSION);
+        console.log('\nSecond Classroom - version ' + VERSION + "\n" + "Program site: https://github.com/Shaobin-Jiang/Second-Classroom\n");
         break;
     case '-w':
         var studentInfo = GetStudentInfo();
@@ -90,6 +105,8 @@ switch (ACTION) {
             }
         }
         break;
+    default:
+        console.log("\nCommand not found! Try \"second-classroom -h\" for extra help!\n");
 }
 
 function GenerateStudentInfo(excelFilePath) {
@@ -332,7 +349,11 @@ function MakeDocxFile(data, filepath) {
     doc.setData(data);
     doc.render();
     let buffer = doc.getZip().generate({ type: 'nodebuffer' });
-    fs.writeFileSync(path.resolve(OUTPUTDIR, filepath), buffer);
+    let targetDir = data.grade + "-" + data.class;
+    if (!fs.existsSync(path.resolve(OUTPUTDIR, targetDir))) {
+        fs.mkdirSync(path.resolve(OUTPUTDIR, targetDir));
+    }
+    fs.writeFileSync(path.resolve(OUTPUTDIR, targetDir, filepath), buffer);
 }
 
 function BubbleSort(arr) {
@@ -351,6 +372,13 @@ function BubbleSort(arr) {
     return arr.reverse().slice(0, 3);
 }
 
+function GetMinGrade() {
+    let dateStr = new Date();
+    // Use the current year to calculate what grades xlsx files need to be generated for
+    // For example, in [2020.9, 2021.9), xlsx files will be generated for grades 2017-2020 only
+    return (dateStr.getMonth() + 1 >= 9) ? dateStr.getFullYear() : (dateStr.getFullYear() - 1);
+}
+
 function GenerateXlsxFiles() {
     var activityFileList = fs.readdirSync(ACTIVITYJSONPATH);
     if (activityFileList.length === 0) {
@@ -364,10 +392,8 @@ function GenerateXlsxFiles() {
         activityBar.tick(1);
     }
 
-    const dateStr = new Date();
-    // Use the current year to calculate what grades xlsx files need to be generated for
-    // For example, in [2020.9, 2021.9), xlsx files will be generated for grades 2017-2020 only
-    const minGrade = (dateStr.getMonth() + 1 >= 9) ? dateStr.getFullYear() : (dateStr.getFullYear() - 1);
+    
+    const minGrade = GetMinGrade()
     const grades = [minGrade - 3, minGrade - 2, minGrade - 1, minGrade];
 
     var xlsxData = {};
