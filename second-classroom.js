@@ -1,7 +1,7 @@
 /*
     Author: Jiang Shaobin (姜绍彬), Falculty of Psychology, Beijing Normal University
     Date: Sept 1st, 2021
-    Version: 1.1.0
+    Version: 1.2.0
 */
 
 /*
@@ -14,7 +14,7 @@
     pkg -t win second-classroom.js
 */
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 
 const fs = require('fs');
 const process = require('process');
@@ -76,7 +76,7 @@ Need a little help? Check the commands below!
                 let fileList = fs.readdirSync(process.argv[3]);
                 var parseActivityBar = new progress('Parsing activities: [:bar] :percent', { total: fileList.length, width: 100, complete: '=' });
                 for (let file in fileList) {
-                    if (fileList[file].indexOf('~$') !== 0) { // Check for any opened .xlsx files
+                    if (fileList[file].indexOf('~$') !== 0 && fileList[file].substr(fileList[file].length - 5, fileList[file].length)) { // Check for any opened .xlsx files
                         RegisterActivity(path.resolve(process.argv[3], fileList[file]));
                     }
                     parseActivityBar.tick(1);
@@ -101,7 +101,7 @@ Need a little help? Check the commands below!
                 var status = GenerateDocxFiles();
             }
             else {
-                console.log('[Error] Template is missing!');
+                console.log(HighlightText("red", '[Error] Template is missing!'));
             }
         }
         break;
@@ -133,7 +133,7 @@ function GenerateStudentInfo(excelFilePath) {
         bar.tick(1);
     }
     else {
-        console.log('[Error] Cannot find' + excelFilePath + '!');
+        console.log(HighlightText("red", '[Error] Cannot find' + excelFilePath + '!'));
     }
 }
 
@@ -153,9 +153,10 @@ function RegisterActivity(excelFilePath) {
     if (fs.existsSync(excelFilePath)) {
         let fileContent = xlsx.parse(excelFilePath);
         let host = fileContent[0].data[1];
+        host[0].replace(/\"/g, " ")
         // Check whether the name of the activity awaiting registration is the same as an existing one
         if (fs.existsSync(path.resolve(ACTIVITYJSONPATH, host[0] + '.json'))) {
-            console.log('\n[Warning] Activity \'' + host[0] + '\' has already been registered!');
+            console.log(HighlightText("blue", '\n[Warning] Activity \'' + host[0] + '\' has already been registered!'));
             return;
         }
         let participant = fileContent[1].data;
@@ -186,7 +187,7 @@ function RegisterActivity(excelFilePath) {
             }
             else {
                 makeFile = false;
-                parseActivityBar.interrupt('[Error] File ' + excelFilePath + '\tCannot find student named ' + participant[i][2] + ', student id of ' + id + ', line' + (i + 1) + ' in the current student information page.');
+                parseActivityBar.interrupt(HighlightText("red", '[Error] File ' + excelFilePath + '    Cannot find student named ' + participant[i][2] + ', student id of ' + id + ', line' + (i + 1) + ' in the current student information page.'));
             }
         }
 
@@ -195,7 +196,7 @@ function RegisterActivity(excelFilePath) {
         }
     }
     else {
-        console.log('[Error] Cannot find' + excelFilePath + '!');
+        console.log(HighlightText("red", '[Error] Cannot find' + excelFilePath + '!'));
     }
 }
 
@@ -208,7 +209,7 @@ function GetStudentInfo() {
         return JSON.parse(fs.readFileSync(STUDENTINFOPATH, 'utf-8'));
     }
     else {
-        console.log('[Error] Cannot find student-info.json in the core folder!');
+        console.log(HighlightText("red", '[Error] Cannot find student-info.json in the core folder!'));
         return undefined;
     }
 }
@@ -238,7 +239,7 @@ function GenerateDocxFiles() {
 
     var activityFileList = fs.readdirSync(ACTIVITYJSONPATH);
     if (activityFileList.length === 0) {
-        console.log('[Error] Folder \'Activities\' is currently empty!');
+        console.log(HighlightText("red", '[Error] Folder \'Activities\' is currently empty!'));
         return false;
     }
     console.log('[Second Classroom] Starting to generate docx files...');
@@ -260,7 +261,7 @@ function GenerateDocxFiles() {
         MakeDocxFile(dataObject[key], dataObject[key].grade + "级 " + dataObject[key].class + "班 " + key + " " + dataObject[key].studentName + ".docx");
         bar.tick(1);
     }
-    console.log('[Second Classroom] Finished generating docx files.');
+    console.log(HighlightText("green", '[Second Classroom] Finished generating docx files.'));
     return true;
 }
 
@@ -337,7 +338,7 @@ function ParseActivity(filename) {
         return true;
     }
     else {
-        console.log('[Error] Cannot find' + filename + '!');
+        console.log(HighlightText("red", '[Error] Cannot find' + filename + '!'));
         return false;
     }
 }
@@ -382,7 +383,7 @@ function GetMinGrade() {
 function GenerateXlsxFiles() {
     var activityFileList = fs.readdirSync(ACTIVITYJSONPATH);
     if (activityFileList.length === 0) {
-        console.log('[Error] Folder \'Activities\' is currently empty!');
+        console.log(HighlightText("red", '[Error] Folder \'Activities\' is currently empty!'));
         return false;
     }
     console.log('[Second Classroom] Starting to generate xlsx files...');
@@ -405,6 +406,7 @@ function GenerateXlsxFiles() {
 
     for (let key in dataObject) {
         if (dataObject[key].grade * 1 >= minGrade - 3 && dataObject[key].grade * 1 <= minGrade) {
+            dataObject[key].activityScore = Math.min(dataObject[key].activityScore, 150);
             xlsxData[dataObject[key].grade].push(dataObject[key]);
             maxEventNumber[dataObject[key].grade] = Math.max(dataObject[key].activity.length, maxEventNumber[dataObject[key].grade]);
         }
@@ -423,7 +425,7 @@ function GenerateXlsxFiles() {
     }
     var buffer = xlsx.build(excelBuilder);
     fs.writeFileSync(path.resolve(OUTPUTDIR, '实名社会公示.xlsx'), buffer, 'binary');
-    console.log('[Second Classroom] Finished generating xlsx files.');
+    console.log(HighlightText("green", '[Second Classroom] Finished generating xlsx files.'));
 
     function Sort(arr) {
         var tempExchangVal;
@@ -500,4 +502,15 @@ function MakeXlsxFile(data, grade, maxEventNumber) {
         dataSheet.push(row);
     }
     return { 'name': grade, 'data': dataSheet, 'options': option };
+}
+
+function HighlightText(color, text) {
+    const colorInfo = {
+        "redBG": ["\u001b[41m", "\u001b[0m"],
+        "blueBG": ["\x1B[44m", "\x1B[49m"],
+        "red": ["\x1B[31m", "\x1B[39m"],
+        "blue": ["\x1B[34m", "\x1B[39m"],
+        "green": ["\x1B[32m", "\x1B[39m"]
+    };
+    return (colorInfo[color][0] + text + colorInfo[color][1]);
 }
