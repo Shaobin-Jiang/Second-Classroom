@@ -1,0 +1,19 @@
+#generate {
+    background-color: aliceblue;
+    border-radius: 10px;
+    cursor: pointer;
+    height: 40px;
+    left: calc(50% - 60px);
+    position: absolute;
+    top: calc(50% - 20px);
+    width: 120px;
+}
+
+#generate:hover {
+    background-color: antiquewhite;
+}
+
+#generate p {
+    line-height: 40px;
+    text-align: center;
+}

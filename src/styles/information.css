@@ -1,0 +1,34 @@
+#about {
+    left: 25%;
+    position: relative;
+    width: 50%;
+}
+
+#about p {
+    color: rgb(200, 200, 200);
+    line-height: 30px;
+    text-align: justify;
+}
+
+#about table {
+    background-color: white;
+    border-collapse: collapse;
+    margin: 20px 0;
+    width: 100%;
+}
+
+#about tr {
+    height: 30px;
+}
+
+#about td, th {
+    border: solid 0.5px rgb(212, 212, 212);
+    color: black;
+    text-align: center;
+    width: 22.5%;
+}
+
+#about .non-data {
+    background-color: rgb(230, 230, 230);
+    width: 10%;
+}

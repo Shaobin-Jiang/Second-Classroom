@@ -1,0 +1,77 @@
+#titleBar {
+    background-color: rgb(30, 31, 28);
+    height: 32px;
+    width: 100%;
+}
+
+#titleBar p {
+    color: rgb(200, 200, 200);
+    line-height: 32px;
+    text-align: center;
+}
+
+#titleBar #title {
+    font-size: 12px;
+}
+
+#titleBar .icon {
+    height: 32px;
+    position: absolute;
+    top: 0;
+    width: 48px;
+}
+
+#titleBar #minimize {
+    font-size: 12px;
+    font-stretch: wider;
+    right: 48px;
+}
+
+#titleBar #minimize:hover {
+    background-color: rgb(53, 54, 51);
+}
+
+#titleBar #close {
+    font-size: 20px;
+    right: 0;
+}
+
+#titleBar #close:hover {
+    background-color: rgb(212, 18, 35);
+}
+
+#headBar {
+    background-color: rgb(30, 31, 28);
+    height: 36px;
+    width: 100%;
+}
+
+#headBar .option {
+    background-color: rgb(52, 53, 47);
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    height: 40px;
+    margin-right: -3px;
+    width: 160px;
+}
+
+#headBar .option p {
+    color: rgb(200, 200, 200);
+    line-height: 32px;
+    text-align: center;
+}
+
+#headBar .option:hover {
+    background-color: rgb(45, 46, 40);
+}
+
+#headBar .highlight {
+    background-color: rgb(39, 40, 34);
+}
+
+#serviceWindow {
+    display: none;
+    height: calc(100% - 68px);
+    width: 100%;
+}

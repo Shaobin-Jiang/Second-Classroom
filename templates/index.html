@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第二课堂 - 2.0.0</title>
+    <link rel="stylesheet" href="../src/styles/global.css">
+    <link rel="stylesheet" href="../src/styles/index.css">
+</head>
+<body>
+    <div id="titleBar">
+        <p id="title">第二课堂 - Version 2.0.0</p>
+        <div class="icon" id="minimize"><p>—</p></div>
+        <div class="icon" id="close"><p>&times;</p></div>
+    </div>
+    <div id="headBar">
+        <a href="./information.html" target="service-window"><div class="option" onclick="highlight(this)"><p>学生信息</p></div></a>
+        <a href="./register.html" target="service-window"><div class="option" onclick="highlight(this)"><p>注册活动</p></div></a>
+        <a href="./generate-docx.html" target="service-window"><div class="option" onclick="highlight(this)"><p>生成文档</p></div></a>
+        <a href="./generate-xlsx.html" target="service-window"><div class="option" onclick="highlight(this)"><p>生成汇总表</p></div></a>
+        <a href="./about.html" target="service-window"><div class="option" onclick="highlight(this)"><p>关于应用</p></div></a>
+    </div>
+
+    <iframe src="" frameborder="0" name="service-window" id="serviceWindow"></iframe>
+
+    <script src="../src/scripts/index.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登记学生信息</title>
+    <link rel="stylesheet" href="../src/styles/global.css">
+    <link rel="stylesheet" href="../src/styles/service.css">
+    <link rel="stylesheet" href="../src/styles/information.css">
+</head>
+<body>
+    <div id="upload">
+        <div id="uploadPath"><p></p></div><div id="uploadButton"><p>上传</p></div>
+    </div>
+
+    <div id="about">
+        <p>学生名单 格式：</p>
+        <table>
+            <tr>
+                <th class="non-data"></th>
+                <th class="non-data">A</th>
+                <th class="non-data">B</th>
+                <th class="non-data">C</th>
+                <th class="non-data">D</th>
+            </tr>
+            <tr>
+                <td class="non-data">1</td>
+                <td>学号</td>
+                <td>姓名</td>
+                <td>班级</td>
+                <td>年级</td>
+            </tr>
+            <tr>
+                <td class="non-data">2</td>
+                <td>201800000000</td>
+                <td>张三</td>
+                <td>1</td>
+                <td>2018</td>
+            </tr>
+            <tr>
+                <td class="non-data">3</td>
+                <td>201900000001</td>
+                <td>李四</td>
+                <td>2</td>
+                <td>2019</td>
+            </tr>
+            <tr>
+                <td class="non-data">4</td>
+                <td>...</td>
+                <td>...</td>
+                <td>...</td>
+                <td>...</td>
+            </tr>
+        </table>
+        <p>请确保Excel文件的<span style="color: skyblue; font-weight: bold;">第一个工作表中</span>，从<span style="color: skyblue; font-weight: bold;">第二行</span>开始为学生信息。当前版本<span style="color: red; font-weight: bold;">不会</span>对上传文件的格式进行检查，请务必保证格式正确。</p>
+    </div>
+
+    <input type="file" id="hiddenUpload" accept=".xlsx">
+
+    <script src="../src/scripts/information.js"></script>
+    <script src="../src/scripts/shortcut.js"></script>
+</body>
+</html>

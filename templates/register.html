@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册活动</title>
+    <link rel="stylesheet" href="../src/styles/global.css">
+    <link rel="stylesheet" href="../src/styles/console.css">
+    <link rel="stylesheet" href="../src/styles/service.css">
+    <link rel="stylesheet" href="../src/styles/register.css">
+</head>
+<body>
+    <div id="upload">
+        <div id="uploadPath"><p></p></div><div id="uploadButton"><p>上传</p></div>
+    </div>
+
+    <div id="about">
+        <p>活动名单 格式：</p>
+        <p>主办方信息:</p>
+        <table>
+            <tr>
+                <th class="non-data" style="width: 5%"></th>
+                <th class="non-data" style="width: 10%">A</th>
+                <th class="non-data" style="width: 15%">B</th>
+                <th class="non-data" style="width: 10%">C</th>
+                <th class="non-data" style="width: 15%">D</th>
+                <th class="non-data" style="width: 22.5%">E</th>
+                <th class="non-data" style="width: 22.5%">F</th>
+            </tr>
+            <tr style="background-color: rgb(189, 215, 238);">
+                <td class="non-data">1</td>
+                <td>活动名称</td>
+                <td>活动时间（如“2020.10.5”）</td>
+                <td>负责人姓名</td>
+                <td>负责人联系方式（手机号码）</td>
+                <td>主办方（如“学生会宣传部”、“团委组织部”、“2018级本科1班”）</td>
+                <td>应加分值（eg:某些部门的投稿活动投稿一次加5分，10分为上限等）</td>
+            </tr>
+            <tr>
+                <td class="non-data">2</td>
+                <td>国王与天使</td>
+                <td>2020.10.9 - 2020.11.19</td>
+                <td>xxx</td>
+                <td>xxxxxxxxxxx</td>
+                <td>学生会生活部</td>
+                <td>参与活动5分，投稿5分，工作人员10分</td>
+            </tr>
+        </table>
+        <p>参与者信息:</p>
+        <table>
+            <tr>
+                <th class="non-data" style="width: 5%"></th>
+                <th class="non-data" style="width: 20%">A</th>
+                <th class="non-data" style="width: 20%">B</th>
+                <th class="non-data" style="width: 12%">C</th>
+                <th class="non-data" style="width: 13%">D</th>
+                <th class="non-data" style="width: 12%">E</th>
+                <th class="non-data" style="width: 20%">F</th>
+            </tr>
+            <tr style="background-color: rgb(198, 224, 180);">
+                <td class="non-data">1</td>
+                <td>参与者年级（如：“2018”）</td>
+                <td>参与者班级（如：“1” “2”）</td>
+                <td>参与者姓名</td>
+                <td>参与者学号</td>
+                <td>应加分值</td>
+                <td>备注（如：工作人员/活动参与者）</td>
+            </tr>
+            <tr>
+                <td class="non-data">2</td>
+                <td>2018</td>
+                <td>1</td>
+                <td>xxx</td>
+                <td>201800000000</td>
+                <td>5</td>
+                <td>活动参与者</td>
+            </tr>
+        </table>
+        <p>可以在下方日志中查看报错信息。</p>
+    </div>
+
+    <input type="file" id="hiddenUpload" accept=".xlsx" multiple>
+
+    <script src="../src/scripts/console.js"></script>
+    <script src="../src/scripts/register.js"></script>
+    <script src="../src/scripts/shortcut.js"></script>
+</body>
+</html>

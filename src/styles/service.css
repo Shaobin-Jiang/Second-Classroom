@@ -1,0 +1,46 @@
+#upload {
+    background-color: rgb(120, 120, 120);
+    border-radius: 20px;
+    height: 40px;
+    margin: 50px auto;
+    width: 60%;
+}
+
+#upload div {
+    display: inline-block;
+}
+
+#uploadPath {
+    width: calc(100% - 100px);
+}
+
+#uploadPath p {
+    box-sizing: border-box;
+    letter-spacing: 1px;
+    line-height: 40px;
+    overflow: hidden;
+    padding: 0 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#uploadButton {
+    background-color: rgb(100, 100, 100);
+    cursor: pointer;
+    height: 100%;
+    width: 100px;
+}
+
+#uploadButton p {
+    color: rgb(220, 220, 220);
+    line-height: 40px;
+    text-align: center;
+}
+
+#uploadButton p:hover {
+    color: rgb(180, 180, 180);
+}
+
+#hiddenUpload {
+    display: none;
+}
