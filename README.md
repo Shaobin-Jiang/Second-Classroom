@@ -1,25 +1,28 @@
 # Second Classroom
 
-![](https://shields.io/badge/Version-2.0.0_--_beta-brightgreen.svg?style=plastic) ![](https://shields.io/badge/License-MIT-informational.svg?style=plastic) ![](https://shields.io/badge/System-Windows_10-critical.svg?style=plastic) ![](https://shields.io/badge/Node_Version-14.15.4-orange.svg?style=plastic) 
+![](https://shields.io/badge/Version-2.1.0-brightgreen.svg?style=plastic) ![](https://shields.io/badge/License-MIT-informational.svg?style=plastic) ![](https://shields.io/badge/System->=Windows_10-critical.svg?style=plastic) ![](https://shields.io/badge/Node_Version-16.14.0-orange.svg?style=plastic) ![](https://shields.io/badge/Electron_Version-17.1.0-orange.svg?style=plastic) 
 
 Second Classroom uses [Electron](https://www.electronjs.org/). Compared with the 1.x version, the 2.x version added a graphical use interface to guide uses.
 
 ## Table of Contents
 
-- [Requirements](#requirements)
-- [Project Structure](#project-structure)
-- [Maintainer](#maintainer)
-- [Contributing](#contributing)
-- [License](#license)
+- [Second Classroom](#second-classroom)
+  - [Table of Contents](#table-of-contents)
+  - [Requirements](#requirements)
+  - [Project Structure](#project-structure)
+  - [Compilation](#compilation)
+  - [Maintainer](#maintainer)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Requirements
 
-There is no requirement for directly using the distributed software, save that your operating system is **Windows 10**.
+There is no requirement for directly using the distributed software, save that your operating system is **Windows 10 or above**.
 
-However, if you want to modify the codes in this repository, then the below requirements need to be satisfied:
+If you want to develop new features based on the code in this repository, the development environment listed below was what was used during the early development of this application:
 
-- NodeJS (Node version used during development is 14.15.4; you can also use other versions so long as they are not too ancient)
-- Electron (Version used during development is 14.0.0)
+- NodeJS (Node version used during development is 16.14.0; you can also use other versions so long as they are not too ancient)
+- Electron (Version used during development is 17.1.0)
 - NodeJS modules
   - docxtemplater
   - node-xlsx
