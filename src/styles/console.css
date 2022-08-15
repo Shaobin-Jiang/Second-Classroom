@@ -1,5 +1,5 @@
 #console {
-    background-color: black;
+    background-color: rgb(37, 37, 37);
     bottom: -260px;
     box-sizing: border-box;
     color: rgb(200, 200, 200);
@@ -18,6 +18,11 @@
     height: 260px;
     overflow-y: auto;
     padding: 10px 10px;
+}
+
+#console #outputArea p {
+    padding-left: 2em;
+    text-indent: -2em;
 }
 
 #console #title {
@@ -75,7 +80,7 @@
 }
 
 #outputArea::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(100, 100, 100, 0.6);
     border-radius: 10px;
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
     -webkit-box-shadow: inset 0 0 5px rgba(0, 0, 0 ,0.2);

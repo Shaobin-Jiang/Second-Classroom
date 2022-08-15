@@ -67,7 +67,7 @@
 }
 
 #headBar .highlight {
-    background-color: rgb(39, 40, 34);
+    background-color: rgb(20, 20, 17) !important;
 }
 
 #serviceWindow {

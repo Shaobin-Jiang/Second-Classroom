@@ -1,13 +1,14 @@
-const fs = require("fs");
-const path = require("path");
-const xlsx = require("node-xlsx");
+const fs = require('fs');
+const path = require('path');
+const xlsx = require('node-xlsx');
 const pizzip = require('pizzip');
 const docxtemplater = require('docxtemplater');
+const ipc = require('electron').ipcRenderer;
 
-const STUDENTINFOPATH = path.resolve(__dirname, "core", "student-info.json"); // Path to the student info json file
-const TEMPLATEPATH = path.resolve(__dirname, "core", "template.docx"); // Path to the template file
-const ACTIVITYJSONPATH = path.resolve(__dirname, "core", "activities"); // Path to the activity folder
-const OUTPUTDIR = path.resolve(__dirname, "output");
+const STUDENTINFOPATH = path.resolve(__dirname, 'core', 'student-info.json'); // Path to the student info json file
+const TEMPLATEPATH = path.resolve(__dirname, 'core', 'template.docx'); // Path to the template file
+const ACTIVITYJSONPATH = path.resolve(__dirname, 'core', 'activities'); // Path to the activity folder
+const OUTPUTDIR = path.resolve(__dirname, 'output'); // Path to the activity folder
 
 function GenerateStudentInfo(excelFilePath) {
     /*
@@ -20,13 +21,20 @@ function GenerateStudentInfo(excelFilePath) {
     let excelFileContent = xlsx.parse(excelFilePath)[0].data;
     let studentInfoObject = new Object();
     for (let i = 1; i < excelFileContent.length; i++) {
-        studentInfoObject[excelFileContent[i][0]] = {
-            "name": excelFileContent[i][1],
-            "class": excelFileContent[i][2] * 1,
-            "grade": excelFileContent[i][3] * 1
+        let studentId = Number(excelFileContent[i][0]);
+        if (isNaN(studentId)) {
+            log(`【警告】学号 <span style="font-weight: bold;">${studentId}</span> 可能不是纯数字的格式，未将该学生信息录入`, 'skyblue');
+        }
+        else {
+            studentInfoObject[studentId] = {
+                'name': excelFileContent[i][1],
+                // Do not parse to number, for class name can be strings like '励耘班'
+                'class': String(excelFileContent[i][2]).replace('班', ''),
+                'grade': Number(excelFileContent[i][3])
+            }
         }
     }
-    fs.writeFileSync(STUDENTINFOPATH, JSON.stringify(studentInfoObject), "utf-8");
+    fs.writeFileSync(STUDENTINFOPATH, JSON.stringify(studentInfoObject), 'utf-8');
 }
 
 function RegisterActivity(excelFilePath, studentInfo) {
@@ -47,22 +55,28 @@ function RegisterActivity(excelFilePath, studentInfo) {
     if (fs.existsSync(excelFilePath)) {
         let fileContent = xlsx.parse(excelFilePath);
         let host = fileContent[0].data[1];
-        host[0].replace(/\\|\/|:|\*|\?|"|<|>|\|/g, " ");
+        host[0].replace(/\\|\/|:|\*|\?|'|<|>|\|/g, ' ');
         // Check whether the name of the activity awaiting registration is the same as an existing one
-        if (fs.existsSync(path.resolve(ACTIVITYJSONPATH, host[0] + ".json"))) {
-            log(`[警告: <span style="font-weight: bold;">${excelFilePath}</span>] "${host[0]}" 已被注册!<br>    将使用${host[0]}(1).json作为活动名`, "blue");
-            host[0] = `${host[0]}(1)`;
+        let repeatedFileNumber = 1;
+        let fileName = host[0] + '.json';
+        while (fs.existsSync(path.resolve(ACTIVITYJSONPATH, fileName))) {
+            fileName = `${host[0]}(${repeatedFileNumber}).json`;
+            repeatedFileNumber++;
+        }
+        if (repeatedFileNumber > 1) {
+            log(`【警告】活动名已被注册！<br>&emsp;&emsp;&emsp;&emsp;文件路径：<span style="color: white;">${excelFilePath}</span><br>&emsp;&emsp;&emsp;&emsp;活动名称：<span style="color: white;">${host[0]}</span><br>&emsp;&emsp;&emsp;&emsp;将使用<span style="color: white;">${fileName}</span>作为文件名`, 'skyblue');
+            // host[0] = `${host[0]}(1)`;
             w++;
         }
         let participant = fileContent[1].data;
         let makeFile = true;
         let activityObject = new Object();
         activityObject.meta = {
-            "0": host[0],
-            "1": "社会活动",
-            "2": host[1],
-            "3": host[2],
-            "4": host[3]
+            '0': host[0],
+            '1': '社会活动',
+            '2': host[1],
+            '3': host[2],
+            '4': host[3]
         };
         activityObject.data = [];
         for (let i = 1; i < participant.length; i++) {
@@ -73,17 +87,17 @@ function RegisterActivity(excelFilePath, studentInfo) {
             // Use == instead of === here to avoid errors in such occasions as class being specified as numeric in excel and string here
             if ((id in studentInfo) && (studentInfo[id].name == participant[i][2]) && (studentInfo[id].class == participant[i][1]) && (studentInfo[id].grade == participant[i][0])) {
                 activityObject.data.push({
-                    "0": participant[i][2],
-                    "1": id,
-                    "2": participant[i][4],
-                    "3": "1.0",
-                    "4": (typeof (participant[i][5]) === "undefined") ? "" : participant[i][5]
+                    '0': participant[i][2],
+                    '1': id,
+                    '2': participant[i][4],
+                    '3': '1.0',
+                    '4': (typeof (participant[i][5]) === 'undefined') ? '' : participant[i][5]
                 })
             }
             else {
                 e++;
                 makeFile = false;
-                let errMsg = `[错误: <span style="font-weight: bold;">${excelFilePath}</span>] 学生名单中找不到当前活动信息文件的第${(i + 1)}行中，名为<span style="color: white;">${participant[i][2]}</span>, 学号为${id}的学生`;
+                let errMsg = `【错误】无法找到学生信息<br>&emsp;&emsp;&emsp;&emsp;文件路径：<span style="color: white;">${excelFilePath}</span>（第${(i + 1)}行）<br>&emsp;&emsp;&emsp;&emsp;学号：<span style="color: white;">${id}</span>&emsp;&emsp;&emsp;&emsp;姓名：<span style="color: white;">${participant[i][2]}</span>&emsp;&emsp;&emsp;&emsp;班级：<span style="color: white;">${participant[i][1]}</span>&emsp;&emsp;&emsp;&emsp;年级：<span style="color: white;">${participant[i][0]}</span>`;
                 let suggestion = [];
                 if (id in studentInfo) {
                     suggestion.push([id, studentInfo[id]]);
@@ -94,26 +108,31 @@ function RegisterActivity(excelFilePath, studentInfo) {
                         suggestion.push([student, info]);
                     }
                 }
-                if (info.length === 0) {
-                    errMsg += "<br>&nbsp;&nbsp;&nbsp;&nbsp;学生名单中也找不到与其学号或姓名相同的学生。";
+                if (suggestion.length === 0) {
+                    errMsg += '<br>&emsp;&emsp;&emsp;&emsp;学生名单中也找不到与其学号或姓名相同的学生。';
                 }
                 else {
-                    errMsg += "<br>&nbsp;&nbsp;&nbsp;&nbsp;可能的修改建议：";
-                    for (let info of suggestion) {
-                        errMsg += `<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;学号: ${info[0]}\t姓名: ${info[1].name}\t班级: ${info[1].class}\t年级: ${info[1].grade}`;
+                    errMsg += '<br>&emsp;&emsp;&emsp;&emsp;可能的修改建议：';
+                    let suggestionString = suggestion.map(function (info) {
+                        return `<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;学号: <span style="color: white;">${info[0]}</span>&emsp;&emsp;&emsp;&emsp;姓名: <span style="color: white;">${info[1].name}</span>&emsp;&emsp;&emsp;&emsp;班级: <span style="color: white;">${info[1].class}</span>&emsp;&emsp;&emsp;&emsp;年级: <span style="color: white;">${info[1].grade}</span>`;
+                    });
+                    suggestionString = Array.from(new Set(suggestionString)); // Remove repeated suggestions
+                    for (let info of suggestionString) {
+                        errMsg += info;
                     }
                 }
+                log(errMsg, 'red');
             }
         }
 
         if (makeFile) {
-            fs.writeFileSync(path.resolve(ACTIVITYJSONPATH, host[0] + ".json"), JSON.stringify(activityObject), "utf-8");
-            log(`Finished: ${excelFilePath}`, "green");
+            fs.writeFileSync(path.resolve(ACTIVITYJSONPATH, fileName), JSON.stringify(activityObject), "utf-8");
+            log(`【完成】: ${excelFilePath}`, 'lightgreen');
             return { success: true, errors: e, warnings: w };
         }
     }
     else {
-        log(`[错误] 找不到文件 ${excelFilePath} + !`);
+        log(`【错误】找不到文件 ${excelFilePath} !`, 'red');
     }
     return { success: false, errors: e, warnings: w };
 }
@@ -124,7 +143,7 @@ function GetStudentInfo() {
         If the file does not exist, a warning will be displayed to the user.
     */
     if (fs.existsSync(STUDENTINFOPATH)) {
-        return JSON.parse(fs.readFileSync(STUDENTINFOPATH, "utf-8"));
+        return JSON.parse(fs.readFileSync(STUDENTINFOPATH, 'utf-8'));
     }
     else {
         return undefined;
@@ -139,8 +158,10 @@ function InitializeDataObject(studentInfo) {
         dataObject[key].id = key;
         dataObject[key].studentName = studentInfo[key].name;
         let d = new Date();
-        let grade = (d.getMonth() + 1 >= 9) ? d.getFullYear() - 1 : d.getFullYear();
-        dataObject[key].grade = `${grade}-${grade + 1}`;
+        let grade = d.getFullYear() - 1;
+        // let grade = (d.getMonth() + 1 >= 9) ? d.getFullYear() : d.getFullYear() - 1;
+        dataObject[key].grade = studentInfo[key].grade;
+        dataObject[key].year = `${grade}-${grade + 1}`;
         dataObject[key].class = studentInfo[key].class;
         dataObject[key].workScore = 0;
         dataObject[key].work = [];
@@ -196,7 +217,7 @@ function ParseActivity(filename, dataObject) {
                 // Will deal with that in following processes
                 dataObject[studentId].activityScore += data[individual][2] * 1;
                 dataObject[studentId].activity.push({
-                    activityName: meta[0] + data[individual][4],
+                    activityName: `${meta[0]}【${data[individual][4]}】`,
                     activityTime: meta[2],
                     activityReference: meta[3],
                     activityTelephone: meta[4],
@@ -205,42 +226,26 @@ function ParseActivity(filename, dataObject) {
                 });
             }
         }
-        else {
-            for (let individual in data) {
-                let studentId = data[individual][1];
-
-                dataObject[studentId].workScore += parseFloat(data[individual][2]) * parseFloat(data[individual][3]);
-                dataObject[studentId].work.push({
-                    workName: meta[0],
-                    workTime: meta[2],
-                    workReference: meta[3],
-                    workTelephone: meta[4],
-                    workMark: data[individual][2],
-                    workCoefficient: data[individual][3],
-                    workActualMark: parseFloat(data[individual][2]) * parseFloat(data[individual][3])
-                })
-            }
-        }
         return true;
     }
     else {
-        log(`[错误] 找不到文件 ${filename} + !`);
+        log(`【错误】找不到文件 ${filename} !`);
         return false;
     }
 }
 
 function GenerateDocxFiles(dataObject) {
     if (!fs.existsSync(TEMPLATEPATH)) {
-        log("[错误] 找不到template.docx文件!", "red");
+        log('【错误】找不到template.docx文件!', 'red');
         return false;
     }
     let activityFileList = fs.readdirSync(ACTIVITYJSONPATH);
     if (activityFileList.length === 0) {
-        log("[错误]Activities文件夹为空!", "red");
+        log('【错误】Activities文件夹为空，需要先注册活动才能生成文档!', 'red');
         return false;
     }
-    log('[第二课堂] 开始生成docx文件...', "green");
-    let c = document.querySelector("iframe").contentDocument.querySelector("#console");
+    log('[第二课堂] 开始生成docx文件...', 'lightgreen');
+    let c = document.querySelector('iframe').contentDocument.querySelector('#console');
     for (let file in activityFileList) {
         success = ParseActivity(path.resolve(ACTIVITYJSONPATH, activityFileList[file]), dataObject);
         if (!success) {
@@ -248,64 +253,41 @@ function GenerateDocxFiles(dataObject) {
         }
     }
 
+    let finishedCount = 0;
     for (let key in dataObject) {
-        if (dataObject[key].work.length > 3) {
-            dataObject[key].work = BubbleSort(dataObject[key].work);
-            dataObject[key].workScore = dataObject[key].work[0].workActualMark + dataObject[key].work[1].workActualMark + dataObject[key].work[2].workActualMark;
-        }
         dataObject[key].activityScore = Math.min(150, dataObject[key].activityScore);
-        dataObject[key].workScore = Math.min(150, dataObject[key].workScore);
+        dataObject[key].workScore = 0;
         dataObject[key].totalScore = dataObject[key].activityScore * 0.6 + dataObject[key].workScore * 1.4;
-        MakeDocxFile(dataObject[key], dataObject[key].grade + "级 " + dataObject[key].class + "班 " + key + " " + dataObject[key].studentName + ".docx");
+        MakeDocxFile(dataObject[key], `${dataObject[key].grade}级 ${dataObject[key].class}班 ${key} ${dataObject[key].studentName}.docx`);
+        finishedCount++;
+        setProgressBar(finishedCount / Object.keys(dataObject));
     }
-    log("[第二课堂] 生成完成!", "green");
+    log('[第二课堂] 生成完成!', 'lightgreen');
+    setProgressBar(-1);
     return true;
-}
 
-function MakeDocxFile(data, filepath) {
-    // Make individual docx files
-    let zip = new pizzip(fs.readFileSync(TEMPLATEPATH, 'binary'));
-    let doc = new docxtemplater(zip);
-    doc.setData(data);
-    doc.render();
-    let buffer = doc.getZip().generate({ type: 'nodebuffer' });
-    let targetDir = data.grade + "-" + data.class;
-    if (!fs.existsSync(path.resolve(OUTPUTDIR, targetDir))) {
-        fs.mkdirSync(path.resolve(OUTPUTDIR, targetDir));
-    }
-    fs.writeFileSync(path.resolve(OUTPUTDIR, targetDir, filepath), buffer);
-}
-
-function BubbleSort(arr) {
-    let i = arr.length, j;
-    let tempExchangVal;
-    while (i > 0) {
-        for (j = 0; j < i - 1; j++) {
-            if (arr[j].workActualMark > arr[j + 1].workActualMark) {
-                tempExchangVal = arr[j];
-                arr[j] = arr[j + 1];
-                arr[j + 1] = tempExchangVal;
-            }
+    function MakeDocxFile(data, filepath) {
+        // Make individual docx files
+        let zip = new pizzip(fs.readFileSync(TEMPLATEPATH, 'binary'));
+        let doc = new docxtemplater(zip);
+        doc.setData(data);
+        doc.render();
+        let buffer = doc.getZip().generate({ type: 'nodebuffer' });
+        let targetDir = data.grade + "-" + data.class;
+        if (!fs.existsSync(path.resolve(OUTPUTDIR, targetDir))) {
+            fs.mkdirSync(path.resolve(OUTPUTDIR, targetDir));
         }
-        i--;
+        fs.writeFileSync(path.resolve(OUTPUTDIR, targetDir, filepath), buffer);
     }
-    return arr.reverse().slice(0, 3);
-}
-
-function GetMinGrade() {
-    let dateStr = new Date();
-    // Use the current year to calculate what grades xlsx files need to be generated for
-    // For example, in [2020.9, 2021.9), xlsx files will be generated for grades 2017-2020 only
-    return (dateStr.getMonth() + 1 >= 9) ? dateStr.getFullYear() : (dateStr.getFullYear() - 1);
 }
 
 function GenerateXlsxFiles(dataObject) {
     let activityFileList = fs.readdirSync(ACTIVITYJSONPATH);
     if (activityFileList.length === 0) {
-        log("[错误] Activities文件夹为空!", "red");
+        log('【错误】 Activities文件夹为空，需要先注册活动才能生成文档!', 'red');
         return false;
     }
-    log("[第二课堂] 开始生成xlsx文件...", "green");
+    log('[第二课堂] 开始生成xlsx文件...', 'lightgreen');
     for (let file in activityFileList) {
         ParseActivity(path.resolve(ACTIVITYJSONPATH, activityFileList[file]), dataObject);
     }
@@ -317,6 +299,7 @@ function GenerateXlsxFiles(dataObject) {
     let maxEventNumber = {};
     for (let grade of grades) {
         xlsxData[grade] = [];
+        // Excel maximum column number determined by the person with the most activities
         maxEventNumber[grade] = 0;
     }
 
@@ -341,7 +324,7 @@ function GenerateXlsxFiles(dataObject) {
     }
     let buffer = xlsx.build(excelBuilder);
     fs.writeFileSync(path.resolve(OUTPUTDIR, '实名社会公示.xlsx'), buffer, 'binary');
-    log("[第二课堂] 生成完成!", "green");
+    log('[第二课堂] 生成完成!', 'lightgreen');
 
     function Sort(arr) {
         let tempExchangVal;
@@ -356,72 +339,88 @@ function GenerateXlsxFiles(dataObject) {
         }
         return arr;
     }
-}
 
-function MakeXlsxFile(data, grade, maxEventNumber) {
-    let range = [{ s: { c: 8, r: 0 }, e: { c: 13, r: 0 } }, { s: { c: 14, r: 0 }, e: { c: 13 + Math.max(maxEventNumber * 2, 1), r: 0 } }];
-    for (let n = 0; n < 8; n++) {
-        range.push({ s: { c: n, r: 0 }, e: { c: n, r: 1 } });
+    function GetMinGrade() {
+        let dateStr = new Date();
+        // Use the current year to calculate what grades xlsx files need to be generated for
+        // For example, in [2020.9, 2021.9), xlsx files will be generated for grades 2017-2020 only
+        return (dateStr.getMonth() + 1 >= 9) ? dateStr.getFullYear() : (dateStr.getFullYear() - 1);
     }
-    let width = [{ wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 40 }, { wch: 10 }, { wch: 40 }, { wch: 10 }, { wch: 40 }, { wch: 10 }];
-    for (let t = 0; t < maxEventNumber; t++) {
-        width.push({ wch: 40 });
-        width.push({ wch: 10 });
-    }
-    const option = { '!merges': range, '!cols': width };
-    let dataSheet = [['学号', '姓名', '班级', '社会工作得分', '社会活动得分', '社会总分', '班级排名', '年级排名', '社会工作', null, null, null, null, null, '社会活动具体项目']];
 
-    let secondRow = [null, null, null, null, null, null, null, null, '社会工作1', '得分', '社会工作2', '得分', '社会工作3', '得分'];
-    for (let i = 0; i < maxEventNumber; i++) {
-        secondRow.push('活动' + (i + 1));
-        secondRow.push('得分');
+    function MakeXlsxFile(data, grade, maxEventNumber) {
+        let range = [{ s: { c: 8, r: 0 }, e: { c: 13, r: 0 } }, { s: { c: 14, r: 0 }, e: { c: 13 + Math.max(maxEventNumber * 2, 1), r: 0 } }];
+        for (let n = 0; n < 8; n++) {
+            range.push({ s: { c: n, r: 0 }, e: { c: n, r: 1 } });
+        }
+        let width = [{ wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 40 }, { wch: 10 }, { wch: 40 }, { wch: 10 }, { wch: 40 }, { wch: 10 }];
+        for (let t = 0; t < maxEventNumber; t++) {
+            width.push({ wch: 40 });
+            width.push({ wch: 10 });
+        }
+        const option = { '!merges': range, '!cols': width };
+        let dataSheet = [['学号', '姓名', '班级', '社会工作得分', '社会活动得分', '社会总分', '班级排名', '年级排名', '社会工作', null, null, null, null, null, '社会活动具体项目']];
+    
+        let secondRow = [null, null, null, null, null, null, null, null, '社会工作1', '得分', '社会工作2', '得分', '社会工作3', '得分'];
+        for (let i = 0; i < maxEventNumber; i++) {
+            secondRow.push('活动' + (i + 1));
+            secondRow.push('得分');
+        }
+        dataSheet.push(secondRow);
+    
+        let totalRank = 1;
+        let classRank = new Object(); // Guess that number of classes would not exceed 8. If it does, just push more 1s into this array.
+        let totalRankLastScore = 0;
+        let classRankLastScore = new Object();
+        let classCount = new Object();
+        for (let j = 0; j < data.length; j++) {
+            let classIndex = data[j].class;
+            if (!(classIndex in classRank)) {
+                classRank[classIndex] = 0;
+                classRankLastScore[classIndex] = 0;
+                classCount[classIndex] = 0;
+            }
+            classCount[classIndex] += 1;
+            if (data[j].totalScore != totalRankLastScore) {
+                totalRank = j + 1;
+                totalRankLastScore = data[j].totalScore;
+            }
+            if (data[j].totalScore != classRankLastScore[classIndex]) {
+                classRank[classIndex] = classCount[classIndex];
+                classRankLastScore[classIndex] = data[j].totalScore;
+            }
+            let row = [data[j].id, data[j].studentName, data[j].class, data[j].workScore, data[j].activityScore, data[j].totalScore, classRank[classIndex], totalRank];
+            for (let p = 0; p < 3; p++) {
+                if (typeof (data[j].work[p]) === 'undefined') {
+                    row.push(null);
+                    row.push(null);
+                }
+                else {
+                    row.push(data[j].work[p].workName);
+                    row.push(data[j].work[p].workActualMark);
+                }
+            }
+            for (let q = 0; q < maxEventNumber; q++) {
+                if (typeof (data[j].activity[q]) === 'undefined') {
+                    row.push(null);
+                    row.push(null);
+                }
+                else {
+                    row.push(data[j].activity[q].activityName);
+                    row.push(data[j].activity[q].activityActualMark);
+                }
+            }
+            dataSheet.push(row);
+        }
+        return { 'name': grade, 'data': dataSheet, 'options': option };
     }
-    dataSheet.push(secondRow);
-
-    let totalRank = 1;
-    let classRank = [0, 0, 0, 0, 0, 0, 0, 0]; // Guess that number of classes would not exceed 8. If it does, just push more 1s into this array.
-    let totalRankLastScore = 0;
-    let classRankLastScore = [0, 0, 0, 0, 0, 0, 0, 0];
-    let classCount = [0, 0, 0, 0, 0, 0, 0, 0];
-    for (let j = 0; j < data.length; j++) {
-        let classIndex = data[j].class - 1;
-        classCount[classIndex] += 1;
-        if (data[j].totalScore != totalRankLastScore) {
-            totalRank = j + 1;
-            totalRankLastScore = data[j].totalScore;
-        }
-        if (data[j].totalScore != classRankLastScore[classIndex]) {
-            classRank[classIndex] = classCount[classIndex];
-            classRankLastScore[classIndex] = data[j].totalScore;
-        }
-        let row = [data[j].id, data[j].studentName, data[j].class, data[j].workScore, data[j].activityScore, data[j].totalScore, classRank[classIndex], totalRank];
-        for (let p = 0; p < 3; p++) {
-            if (typeof (data[j].work[p]) === 'undefined') {
-                row.push(null);
-                row.push(null);
-            }
-            else {
-                row.push(data[j].work[p].workName);
-                row.push(data[j].work[p].workActualMark);
-            }
-        }
-        for (let q = 0; q < maxEventNumber; q++) {
-            if (typeof (data[j].activity[q]) === 'undefined') {
-                row.push(null);
-                row.push(null);
-            }
-            else {
-                row.push(data[j].activity[q].activityName);
-                row.push(data[j].activity[q].activityActualMark);
-            }
-        }
-        dataSheet.push(row);
-    }
-    return { 'name': grade, 'data': dataSheet, 'options': option };
 }
 
 function log(msg, color) {
-    document.querySelector("iframe").contentDocument.querySelector("#console").log(`<p style="color: ${typeof color === "undefined" ? "white" : color};"><span style="color: white;">&gt;&gt;&gt; </span>${msg}</p>`);
+    document.querySelector("iframe").contentDocument.querySelector("#console").log(`<p style="color: ${typeof color === 'undefined' ? "white" : color};"><span style="color: white;">&gt;&gt;&gt; </span>${msg}</p>`);
+}
+
+function setProgressBar(progress) {
+    ipc.send('progress-bar', progress);
 }
 
 module.exports = {
@@ -431,5 +430,6 @@ module.exports = {
     RegisterActivity,
     InitializeDataObject,
     GenerateDocxFiles,
-    GenerateXlsxFiles
+    GenerateXlsxFiles,
+    setProgressBar
 }

@@ -1,6 +1,6 @@
 const require = parent.window.require;
 
-const { STUDENTINFOPATH, GetStudentInfo, RegisterActivity } = require("../second-classroom.js");
+const { STUDENTINFOPATH, GetStudentInfo, RegisterActivity, setProgressBar } = require("../second-classroom.js");
 const fs = require("fs");
 
 if (!fs.existsSync(STUDENTINFOPATH)) {
@@ -17,8 +17,9 @@ else {
             document.querySelector("#console").addError(out.errors);
             document.querySelector("#console").addWarning(out.warnings);
             finished++;
-            document.querySelector("#console").tick(finished / total);
+            setProgressBar(finished / total);
         }
+        setProgressBar(-1);
     }
 
     document.querySelector("#uploadButton").onclick = function () {

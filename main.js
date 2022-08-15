@@ -12,6 +12,10 @@ function createWindow () {
         }
     });
 
+    ipcMain.on('progress-bar', (e, progress) => {
+        win.setProgressBar(progress);
+    });
+
     ipcMain.on("dev-tools", () => {
         win.toggleDevTools();
     });
