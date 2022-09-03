@@ -1,6 +1,6 @@
 #console {
     background-color: rgb(37, 37, 37);
-    bottom: -260px;
+    bottom: -400px;
     box-sizing: border-box;
     color: rgb(200, 200, 200);
     position: fixed;
@@ -15,9 +15,13 @@
 
 #console #outputArea {
     box-sizing: border-box;
-    height: 260px;
+    height: 400px;
     overflow-y: auto;
     padding: 10px 10px;
+}
+
+#console #outputArea span {
+    user-select: all;
 }
 
 #console #outputArea p {

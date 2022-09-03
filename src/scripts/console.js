@@ -24,9 +24,17 @@
         document.querySelector("#warning").innerHTML = c.warnings;
     }
 
+    c.clear = function () {
+        c.errors = 0;
+        c.warnings = 0;
+        document.querySelector('#error').innerHTML = c.errors;
+        document.querySelector('#warning').innerHTML = c.warnings;
+        document.querySelector("#outputArea").innerHTML = '';
+    }
+
     c.folded = true;
     document.querySelector("#consoleClose").onclick = function() {
-        c.style.bottom = "-260px";
+        c.style.bottom = "-400px";
         c.folded = true;
         this.style.display = "none";
     }
@@ -36,7 +44,7 @@
             document.querySelector("#consoleClose").style.display = "block";
         }
         else {
-            c.style.bottom = "-260px";
+            c.style.bottom = "-400px";
             document.querySelector("#consoleClose").style.display = "none";
         }
         c.folded = !c.folded;

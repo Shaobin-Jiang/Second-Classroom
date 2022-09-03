@@ -55,7 +55,7 @@ function RegisterActivity(excelFilePath, studentInfo) {
     if (fs.existsSync(excelFilePath)) {
         let fileContent = xlsx.parse(excelFilePath);
         let host = fileContent[0].data[1];
-        host[0].replace(/\\|\/|:|\*|\?|'|<|>|\|/g, ' ');
+        host[0] = String(host[0]).replace(/\\|\/|:|\*|\?|'|"|<|>|\|/g, ' ');
         // Check whether the name of the activity awaiting registration is the same as an existing one
         let repeatedFileNumber = 1;
         let fileName = host[0] + '.json';
@@ -83,16 +83,28 @@ function RegisterActivity(excelFilePath, studentInfo) {
             if (participant[i].length === 0) {
                 continue;
             }
+            participant[i][1] = String(participant[i][1]).replace('班', '')
+            participant[i][4] = String(participant[i][4]).replace(/[^0-9]/g, '');
+            for (let j = 0; j < 4; j++) {
+                participant[i][j] = String(participant[i][j]).replace(/\s/g, '');
+            }
             let id = participant[i][3];
             // Use == instead of === here to avoid errors in such occasions as class being specified as numeric in excel and string here
-            if ((id in studentInfo) && (studentInfo[id].name == participant[i][2]) && (studentInfo[id].class == participant[i][1]) && (studentInfo[id].grade == participant[i][0])) {
+            // Skip validating for classes, because that might change across semesters
+            if ((id in studentInfo) && (studentInfo[id].name == participant[i][2]) && (studentInfo[id].grade == participant[i][0])) {
                 activityObject.data.push({
                     '0': participant[i][2],
                     '1': id,
-                    '2': participant[i][4],
+                    '2': Number(participant[i][4]),
                     '3': '1.0',
                     '4': (typeof (participant[i][5]) === 'undefined') ? '' : participant[i][5]
                 })
+                // Warn for incorrect class info
+                if (studentInfo[id].class != participant[i][1]) {
+                    let warnMsg = `【警告】学生班级信息可能有误<br>&emsp;&emsp;&emsp;&emsp;文件路径：<span style="color: white;">${excelFilePath}</span>（第${(i + 1)}行）<br>&emsp;&emsp;&emsp;&emsp;学号：<span style="color: white;">${id}</span>&emsp;&emsp;&emsp;&emsp;姓名：<span style="color: white;">${participant[i][2]}</span>&emsp;&emsp;&emsp;&emsp;班级：<span style="color: white;">${participant[i][1]}</span>&emsp;&emsp;&emsp;&emsp;年级：<span style="color: white;">${participant[i][0]}</span><br>&emsp;&emsp;&emsp;&emsp;学生名单中，该学生班级为&emsp;&emsp;&emsp;&emsp;${studentInfo[id].class}`;
+                    log(warnMsg, 'skyblue');
+                    w++;
+                }
             }
             else {
                 e++;
@@ -104,7 +116,7 @@ function RegisterActivity(excelFilePath, studentInfo) {
                 }
                 for (let student in studentInfo) {
                     let info = studentInfo[student];
-                    if (info.name === studentInfo[id].name && info != id) {
+                    if (info.name === participant[i][2] && student != id) {
                         suggestion.push([student, info]);
                     }
                 }

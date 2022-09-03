@@ -1,6 +1,6 @@
 {
   "name": "second-classroom",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Generating .docx and .xlsx files",
   "main": "main.js",
   "author": "Shaobin Jiang",
@@ -25,7 +25,9 @@
   },
   "config": {
     "forge": {
-      "packagerConfig": {"icon": "./src/images/logo.ico"},
+      "packagerConfig": {
+        "icon": "./src/images/logo.ico"
+      },
       "makers": [
         {
           "name": "@electron-forge/maker-squirrel",
