@@ -32,3 +32,17 @@
     background-color: rgb(230, 230, 230);
     width: 10%;
 }
+
+#about #clearStudentInfo {
+    margin-bottom: 20px;
+    text-decoration: underline;
+}
+
+#about #clearStudentInfo a {
+    color: rgb(200, 200, 200);
+    cursor: pointer;
+}
+
+#about #clearStudentInfo a:visited {
+    color: rgb(200, 200, 200);
+}

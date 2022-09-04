@@ -1,6 +1,6 @@
 {
   "name": "second-classroom",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "Generating .docx and .xlsx files",
   "main": "main.js",
   "author": "Shaobin Jiang",

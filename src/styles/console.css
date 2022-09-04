@@ -33,7 +33,7 @@
     width: 260px;
 }
 
-#console #title p, #console #save p {
+#console #title p, #console #save p, #console #clearConsole p {
     line-height: 24px;
     text-align: center;
 }
@@ -42,7 +42,7 @@
     background-color: rgb(88, 90, 81);
 }
 
-#console #save {
+#console #save,#clearConsole {
     background-color: rgb(88, 90, 81);
     cursor: pointer;
     height: 24px;
@@ -51,6 +51,10 @@
     top: 0;
     width: 120px;
 }
+
+#console #clearConsole {
+        left: 460px
+    }
 
 /* #console #save p {
     line-height: 24px;

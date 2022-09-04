@@ -12,10 +12,12 @@
 </head>
 <body>
     <div id="upload">
-        <div id="uploadPath"><p></p></div><div id="uploadButton"><p>上传</p></div>
+        <div id="uploadPath"><p>上传文件夹</p></div><div id="uploadButton"><p>上传</p></div>
     </div>
 
     <div id="about">
+        <p id="clearActivities"><a>清除活动信息</a></p>
+        <p id="generateActivityList"><a>生成活动列表</a></p>
         <p>活动名单 格式：</p>
         <p>主办方信息:</p>
         <table>
@@ -81,6 +83,7 @@
     </div>
 
     <input type="file" id="hiddenUpload" accept=".xlsx, .xls" multiple>
+    <input type="file" id="hiddenUploadPatches" webkitdirectory>
 
     <script src="../src/scripts/console.js"></script>
     <script src="../src/scripts/register.js"></script>

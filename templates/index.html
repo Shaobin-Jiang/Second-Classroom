@@ -4,22 +4,24 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>第二课堂 - 2.1.1</title>
+    <title>第二课堂 - 2.2.0</title>
     <link rel="stylesheet" href="../src/styles/global.css">
     <link rel="stylesheet" href="../src/styles/index.css">
 </head>
 <body>
     <div id="titleBar">
-        <p id="title">第二课堂 - Version 2.1.1</p>
+        <p id="title">第二课堂 - Version 2.2.0</p>
         <div class="icon" id="minimize"><p>—</p></div>
         <div class="icon" id="close"><p>&times;</p></div>
     </div>
     <div id="headBar">
+        <!-- For tabs that have a console, strictly conform to the id. name naming rule -->
         <a href="./information.html" target="service-window"><div class="option"><p>1. 学生信息</p></div></a>
         <a href="./register.html" target="service-window"><div class="option"><p>2. 注册活动</p></div></a>
         <a href="./generate-docx.html" target="service-window"><div class="option"><p>3. 生成文档</p></div></a>
         <a href="./generate-xlsx.html" target="service-window"><div class="option"><p>4. 生成汇总表</p></div></a>
         <a href="./about.html" target="service-window"><div class="option"><p>关于应用</p></div></a>
+        <a id="openOutputFolder"><div class="option"><p>打开输出文件夹</p></div></a>
     </div>
 
     <iframe src="" frameborder="0" name="service-window" id="serviceWindow"></iframe>

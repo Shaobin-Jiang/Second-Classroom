@@ -1,4 +1,5 @@
 const ipc = require('electron').ipcRenderer;
+const { openOutputFolder } = require('../second-classroom.js')
 
 // Toggle dev tools
 document.onkeydown = function(e) {
@@ -12,18 +13,21 @@ document.onkeydown = function(e) {
 }
 
 for (let option of document.querySelectorAll('.option')) {
+    if (option.parentNode.id === 'openOutputFolder') {
+        continue;
+    }
     option.addEventListener('click', function() {
         document.querySelector('iframe').style.display = 'block';
 
         // highlight
         for (let option of document.querySelectorAll('.option')) {
             if (option.classList.contains('highlight')) {
-                option.classList.remove('highlight');;
+                option.classList.remove('highlight');
             }
         }
 
         if (!option.classList.contains('highlight')) {
-            option.classList.add('highlight');;
+            option.classList.add('highlight');
         }
     });
 }
@@ -35,3 +39,9 @@ document.querySelector('#minimize').onclick = function() {
 document.querySelector('#close').onclick = function() {
     ipc.send('close');
 }
+
+document.querySelector('#openOutputFolder').onclick = function () {
+    openOutputFolder();
+}
+
+window.consoleContent = [{}, {}, {}, {}];

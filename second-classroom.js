@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const xlsx = require('node-xlsx');
 const pizzip = require('pizzip');
 const docxtemplater = require('docxtemplater');
@@ -11,13 +12,11 @@ const ACTIVITYJSONPATH = path.resolve(__dirname, 'core', 'activities'); // Path 
 const OUTPUTDIR = path.resolve(__dirname, 'output'); // Path to the activity folder
 
 function GenerateStudentInfo(excelFilePath) {
-    /*
-        The excel file that contains student info should look like this:
-        学号    姓名    班级    年级
-        id1    name1   class1  grade1
-        id2    name2   class2  grade2
-        ...    ...     ...     ...
-    */
+    // The excel file that contains student info should look like this:
+    // 学号    姓名    班级    年级
+    // id1    name1   class1  grade1
+    // id2    name2   class2  grade2
+    // ...    ...     ...     ...
     let excelFileContent = xlsx.parse(excelFilePath)[0].data;
     let studentInfoObject = new Object();
     for (let i = 1; i < excelFileContent.length; i++) {
@@ -38,18 +37,26 @@ function GenerateStudentInfo(excelFilePath) {
 }
 
 function RegisterActivity(excelFilePath, studentInfo) {
-    /*
-        Currently, this module only deals with social activities.
-        Parameter excelFilePath is the path to a single file.
-        The excel file should consist of two sheets: 主办方信息 and 参与者信息
-        When an activity is registered, the program will automatically check for potential mistakes of mismatch between name and id.
-        
-        Sheet 主办方信息 should look like this:
-            活动名称    活动时间    负责人姓名    负责人联系方式    主办方    应加分值
-        
-        Sheet 参与者信息 should look like this:
-            参与者年级    参与者班级    参与者姓名    参与者学号    应加分值    备注
-    */
+    try {
+        return _RegisterActivity(excelFilePath, studentInfo);
+    }
+    catch (e) {
+        log(`【错误】文件<span style="color: white;">${excelFilePath}</span>格式存在严重问题，请检查！`, 'red');
+        return { success: false, errors: 1, warnings: 0 }
+    }
+}
+
+function _RegisterActivity(excelFilePath, studentInfo) {
+    // Currently, this module only deals with social activities.
+    // Parameter excelFilePath is the path to a single file.
+    // The excel file should consist of two sheets: 主办方信息 and 参与者信息
+    // When an activity is registered, the program will automatically check for potential mistakes of mismatch between name and id.
+
+    // Sheet 主办方信息 should look like this:
+    // 活动名称    活动时间    负责人姓名    负责人联系方式    主办方    应加分值
+
+    // Sheet 参与者信息 should look like this:
+    // 参与者年级    参与者班级    参与者姓名    参与者学号    应加分值    备注
     let e = 0; // Number of errors
     let w = 0; // Number of warnings
     if (fs.existsSync(excelFilePath)) {
@@ -126,6 +133,15 @@ function RegisterActivity(excelFilePath, studentInfo) {
                 else {
                     errMsg += '<br>&emsp;&emsp;&emsp;&emsp;可能的修改建议：';
                     let suggestionString = suggestion.map(function (info) {
+                        if (info[0] != id) {
+                            info[0] = `<span style="color: lightgreen;">${info[0]}</span>`;
+                        }
+                        if (info[1].name != participant[i][2]) {
+                            info[1].name = `<span style="color: lightgreen;">${info[1].name}</span>`;
+                        }
+                        if (info[1].grade != participant[i][0]) {
+                            info[1].grade = `<span style="color: lightgreen;">${info[1].grade}</span>`;
+                        }
                         return `<br>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;学号: <span style="color: white;">${info[0]}</span>&emsp;&emsp;&emsp;&emsp;姓名: <span style="color: white;">${info[1].name}</span>&emsp;&emsp;&emsp;&emsp;班级: <span style="color: white;">${info[1].class}</span>&emsp;&emsp;&emsp;&emsp;年级: <span style="color: white;">${info[1].grade}</span>`;
                     });
                     suggestionString = Array.from(new Set(suggestionString)); // Remove repeated suggestions
@@ -149,11 +165,32 @@ function RegisterActivity(excelFilePath, studentInfo) {
     return { success: false, errors: e, warnings: w };
 }
 
+function generateActivityList() {
+    let excelBuilder = [];
+    let options = { '!cols': [{ wch: 80 }, { wch: 30 }, { wch: 40 }, { wch: 40 } ] };
+    let data = [['活动名称', '活动时间', '负责人', '负责人联系方式']];
+    for (let file of fs.readdirSync(ACTIVITYJSONPATH)) {
+        let content = JSON.parse(fs.readFileSync(path.resolve(ACTIVITYJSONPATH, file)));
+        data.push([
+            content.meta[0], // activity name
+            content.meta[2], // activity time
+            content.meta[3], // person in charge
+            content.meta[4] // phone number
+        ]);
+    }
+    excelBuilder.push({
+        'name': '活动汇总',
+        'data': data,
+        'options': options
+    });
+    let buffer = xlsx.build(excelBuilder);
+    fs.writeFileSync(path.resolve(OUTPUTDIR, '活动汇总表.xlsx'), buffer);
+    alert('活动汇总表生成完成');
+}
+
 function GetStudentInfo() {
-    /*
-        Read the .json file containing information of all the students and parse it into a JavaScript object.
-        If the file does not exist, a warning will be displayed to the user.
-    */
+    // Read the .json file containing information of all the students and parse it into a JavaScript object.
+    // If the file does not exist, a warning will be displayed to the user.
     if (fs.existsSync(STUDENTINFOPATH)) {
         return JSON.parse(fs.readFileSync(STUDENTINFOPATH, 'utf-8'));
     }
@@ -185,38 +222,36 @@ function InitializeDataObject(studentInfo) {
 }
 
 function ParseActivity(filename, dataObject) {
-    /*
-        Read an [activity].json file and parse its content.
-        Returns true if parsing succeeds and false if it fails.
-        An individual [activity].json file should look like:
-        {
-            "meta": {
-                "0": name,
-                "1": type (社会活动 / 社会工作)
-                "2": time
-                "3": reference
-                "4": telephone
-            },
-            data": {
-                [
-                    {
-                        "0": name1
-                        "1": id1
-                        "2": score1
-                        "3": coefficient1 (set to 1.0 if this is social activity)
-                        "4": remark1
-                    },
-                    {
-                        "0": name2
-                        "1": id2
-                        "2": score2
-                        "3": coefficient2 (set to 1.0 if this is social activity)
-                        "4": remark2
-                    }
-                ]
-            }
-        }
-    */
+    // Read an [activity].json file and parse its content.
+    // Returns true if parsing succeeds and false if it fails.
+    // An individual [activity].json file should look like:
+    // {
+    //     "meta": {
+    //         "0": name,
+    //         "1": type (社会活动 / 社会工作)
+    //         "2": time
+    //         "3": reference
+    //         "4": telephone
+    //     },
+    //     data": {
+    //         [
+    //             {
+    //                 "0": name1
+    //                 "1": id1
+    //                 "2": score1
+    //                 "3": coefficient1 (set to 1.0 if this is social activity)
+    //                 "4": remark1
+    //             },
+    //             {
+    //                 "0": name2
+    //                 "1": id2
+    //                 "2": score2
+    //                 "3": coefficient2 (set to 1.0 if this is social activity)
+    //                 "4": remark2
+    //             }
+    //         ]
+    //     }
+    // }
     if (fs.existsSync(filename)) {
         let activityObject = JSON.parse(fs.readFileSync(filename, 'utf-8'));
         let meta = activityObject.meta;
@@ -272,7 +307,7 @@ function GenerateDocxFiles(dataObject) {
         dataObject[key].totalScore = dataObject[key].activityScore * 0.6 + dataObject[key].workScore * 1.4;
         MakeDocxFile(dataObject[key], `${dataObject[key].grade}级 ${dataObject[key].class}班 ${key} ${dataObject[key].studentName}.docx`);
         finishedCount++;
-        setProgressBar(finishedCount / Object.keys(dataObject));
+        setProgressBar(finishedCount / Object.keys(dataObject).length);
     }
     log('[第二课堂] 生成完成!', 'lightgreen');
     setProgressBar(-1);
@@ -303,7 +338,7 @@ function GenerateXlsxFiles(dataObject) {
     for (let file in activityFileList) {
         ParseActivity(path.resolve(ACTIVITYJSONPATH, activityFileList[file]), dataObject);
     }
-    
+
     const minGrade = GetMinGrade()
     const grades = [minGrade - 3, minGrade - 2, minGrade - 1, minGrade];
 
@@ -337,6 +372,7 @@ function GenerateXlsxFiles(dataObject) {
     let buffer = xlsx.build(excelBuilder);
     fs.writeFileSync(path.resolve(OUTPUTDIR, '实名社会公示.xlsx'), buffer, 'binary');
     log('[第二课堂] 生成完成!', 'lightgreen');
+    alert('汇总Excel文件生成完成');
 
     function Sort(arr) {
         let tempExchangVal;
@@ -371,14 +407,14 @@ function GenerateXlsxFiles(dataObject) {
         }
         const option = { '!merges': range, '!cols': width };
         let dataSheet = [['学号', '姓名', '班级', '社会工作得分', '社会活动得分', '社会总分', '班级排名', '年级排名', '社会工作', null, null, null, null, null, '社会活动具体项目']];
-    
+
         let secondRow = [null, null, null, null, null, null, null, null, '社会工作1', '得分', '社会工作2', '得分', '社会工作3', '得分'];
         for (let i = 0; i < maxEventNumber; i++) {
             secondRow.push('活动' + (i + 1));
             secondRow.push('得分');
         }
         dataSheet.push(secondRow);
-    
+
         let totalRank = 1;
         let classRank = new Object(); // Guess that number of classes would not exceed 8. If it does, just push more 1s into this array.
         let totalRankLastScore = 0;
@@ -435,13 +471,40 @@ function setProgressBar(progress) {
     ipc.send('progress-bar', progress);
 }
 
+function clearStudentInfo() {
+    if (fs.existsSync(STUDENTINFOPATH)) {
+        fs.unlinkSync(STUDENTINFOPATH);
+    }
+    alert('清除完成');
+}
+
+function clearActivities() {
+    for (let file of fs.readdirSync(ACTIVITYJSONPATH)) {
+        fs.unlinkSync(path.resolve(ACTIVITYJSONPATH, file));
+    }
+    alert('清除完成');
+}
+
+function openOutputFolder() {
+    try {
+        execSync(`explorer "${path.resolve(__dirname, OUTPUTDIR).replace(/\//g, '\\')}"`);
+    }
+    catch (e) {
+        //
+    }
+}
+
 module.exports = {
     STUDENTINFOPATH,
     GetStudentInfo,
     GenerateStudentInfo,
     RegisterActivity,
+    generateActivityList,
     InitializeDataObject,
     GenerateDocxFiles,
     GenerateXlsxFiles,
-    setProgressBar
+    setProgressBar,
+    clearStudentInfo,
+    clearActivities,
+    openOutputFolder
 }

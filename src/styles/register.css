@@ -30,3 +30,25 @@
 #about .non-data {
     background-color: rgb(230, 230, 230);
 }
+
+#uploadPath {
+    cursor: pointer;
+}
+
+#hiddenUploadPatches {
+    display: none;
+}
+
+#about #clearActivities, #generateActivityList {
+    margin-bottom: 20px;
+    text-decoration: underline;
+}
+
+#about a {
+    color: rgb(200, 200, 200);
+    cursor: pointer;
+}
+
+#about #clearActivities a:visited {
+    color: rgb(200, 200, 200);
+}
