@@ -10,6 +10,7 @@ const STUDENTINFOPATH = path.resolve(__dirname, 'core', 'student-info.json'); //
 const TEMPLATEPATH = path.resolve(__dirname, 'core', 'template.docx'); // Path to the template file
 const ACTIVITYJSONPATH = path.resolve(__dirname, 'core', 'activities'); // Path to the activity folder
 const OUTPUTDIR = path.resolve(__dirname, 'output'); // Path to the activity folder
+const MAX_ACTIVITY_SCORE = 120;
 
 function GenerateStudentInfo(excelFilePath) {
     // The excel file that contains student info should look like this:
@@ -302,7 +303,7 @@ function GenerateDocxFiles(dataObject) {
 
     let finishedCount = 0;
     for (let key in dataObject) {
-        dataObject[key].activityScore = Math.min(150, dataObject[key].activityScore);
+        dataObject[key].activityScore = Math.min(MAX_ACTIVITY_SCORE, dataObject[key].activityScore);
         dataObject[key].workScore = 0;
         dataObject[key].totalScore = dataObject[key].activityScore * 0.6 + dataObject[key].workScore * 1.4;
         MakeDocxFile(dataObject[key], `${dataObject[key].grade}级 ${dataObject[key].class}班 ${key} ${dataObject[key].studentName}.docx`);
@@ -352,7 +353,7 @@ function GenerateXlsxFiles(dataObject) {
 
     for (let key in dataObject) {
         if (dataObject[key].grade * 1 >= minGrade - 3 && dataObject[key].grade * 1 <= minGrade) {
-            dataObject[key].activityScore = Math.min(dataObject[key].activityScore, 150);
+            dataObject[key].activityScore = Math.min(dataObject[key].activityScore, MAX_ACTIVITY_SCORE);
             xlsxData[dataObject[key].grade].push(dataObject[key]);
             maxEventNumber[dataObject[key].grade] = Math.max(dataObject[key].activity.length, maxEventNumber[dataObject[key].grade]);
         }

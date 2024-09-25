@@ -1,6 +1,6 @@
 # Second Classroom
 
-![](https://shields.io/badge/Version-2.2.0-brightgreen.svg?style=plastic) ![](https://shields.io/badge/License-MIT-informational.svg?style=plastic) ![](https://shields.io/badge/System->=Windows_10-critical.svg?style=plastic) ![](https://shields.io/badge/Electron_Version-17.1.0-orange.svg?style=plastic) 
+![](https://shields.io/badge/Version-2.2.1-brightgreen.svg?style=plastic) ![](https://shields.io/badge/License-MIT-informational.svg?style=plastic) ![](https://shields.io/badge/System->=Windows_10-critical.svg?style=plastic) ![](https://shields.io/badge/Electron_Version-17.1.0-orange.svg?style=plastic) 
 
 Second Classroom uses [Electron](https://www.electronjs.org/). Compared with the 1.x version, the 2.x version added a graphical user interface for convenience.
 
