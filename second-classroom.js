@@ -311,6 +311,7 @@ function GenerateDocxFiles(dataObject) {
         setProgressBar(finishedCount / Object.keys(dataObject).length);
     }
     log('[第二课堂] 生成完成!', 'lightgreen');
+    alert('文档生成完成');
     setProgressBar(-1);
     return true;
 
