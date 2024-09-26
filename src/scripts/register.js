@@ -37,7 +37,7 @@ else {
             let relativePath = this.files[0].webkitRelativePath.replace(/\//g, '\\');
             fullPath = fullPath.replace(relativePath, '');
             fullPath += relativePath.split('\\')[0];
-            document.querySelector('#uploadPath p').innerHTML = `上传文件夹：${fullPath}`;
+            document.querySelector('#uploadPath p').innerHTML = `<span style="color: lightgreen;">已上传文件夹：${fullPath}</span>`;
         }
         for (let file of this.files) {
             out = RegisterActivity(file.path, studentInfo);

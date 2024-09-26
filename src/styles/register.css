@@ -35,6 +35,10 @@
     cursor: pointer;
 }
 
+#uploadPath p {
+    color: red;
+}
+
 #hiddenUploadPatches {
     display: none;
 }
