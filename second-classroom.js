@@ -10,7 +10,43 @@ const STUDENTINFOPATH = path.resolve(__dirname, 'core', 'student-info.json'); //
 const TEMPLATEPATH = path.resolve(__dirname, 'core', 'template.docx'); // Path to the template file
 const ACTIVITYJSONPATH = path.resolve(__dirname, 'core', 'activities'); // Path to the activity folder
 const OUTPUTDIR = path.resolve(__dirname, 'output'); // Path to the activity folder
-const MAX_ACTIVITY_SCORE = 120;
+
+class Config {
+    constructor() {
+        this.configPath = path.resolve(__dirname, 'core', 'config.json');
+        this._config = this._default;
+
+        if (this.configExists) {
+            this.config = JSON.parse(fs.readFileSync(this.configPath));
+            return;
+        }
+    }
+
+    _default = {
+        maxActivityScore: 120,
+        maxWorkScore: 180,
+    }
+
+    get configExists() {
+        return fs.existsSync(this.configPath);
+    }
+
+    get config() {
+        return this._config;
+    }
+
+    set config(cfg) {
+        let c = {};
+        c.maxActivityScore = cfg.maxActivityScore ?? this._default.maxActivityScore;
+        c.maxWorkScore = cfg.maxWorkScore ?? this._default.maxWorkScore;
+
+        this._config = c;
+    }
+
+    apply() {
+        fs.writeFileSync(this.configPath, JSON.stringify(this.config), 'utf-8');
+    }
+}
 
 function GenerateStudentInfo(excelFilePath) {
     // The excel file that contains student info should look like this:
@@ -301,11 +337,15 @@ function GenerateDocxFiles(dataObject) {
         }
     }
 
+    let config = new Config();
+
     let finishedCount = 0;
     for (let key in dataObject) {
-        dataObject[key].activityScore = Math.min(MAX_ACTIVITY_SCORE, dataObject[key].activityScore);
+        dataObject[key].activityScore = Math.min(config.config.maxActivityScore, dataObject[key].activityScore);
         dataObject[key].workScore = 0;
         dataObject[key].totalScore = dataObject[key].activityScore * 0.6 + dataObject[key].workScore * 1.4;
+        dataObject[key].maxWork = config.config.maxWorkScore;
+        dataObject[key].maxActivity = config.config.maxActivityScore;
         MakeDocxFile(dataObject[key], `${dataObject[key].grade}级 ${dataObject[key].class}班 ${key} ${dataObject[key].studentName}.docx`);
         finishedCount++;
         setProgressBar(finishedCount / Object.keys(dataObject).length);
@@ -352,9 +392,10 @@ function GenerateXlsxFiles(dataObject) {
         maxEventNumber[grade] = 0;
     }
 
+    let config = new Config();
     for (let key in dataObject) {
         if (dataObject[key].grade * 1 >= minGrade - 3 && dataObject[key].grade * 1 <= minGrade) {
-            dataObject[key].activityScore = Math.min(dataObject[key].activityScore, MAX_ACTIVITY_SCORE);
+            dataObject[key].activityScore = Math.min(dataObject[key].activityScore, config.config.maxActivityScore);
             xlsxData[dataObject[key].grade].push(dataObject[key]);
             maxEventNumber[dataObject[key].grade] = Math.max(dataObject[key].activity.length, maxEventNumber[dataObject[key].grade]);
         }
@@ -498,6 +539,7 @@ function openOutputFolder() {
 
 module.exports = {
     STUDENTINFOPATH,
+    Config,
     GetStudentInfo,
     GenerateStudentInfo,
     RegisterActivity,
