@@ -343,7 +343,7 @@ function GenerateDocxFiles(dataObject) {
     for (let key in dataObject) {
         dataObject[key].activityScore = Math.min(config.config.maxActivityScore, dataObject[key].activityScore);
         dataObject[key].workScore = 0;
-        dataObject[key].totalScore = dataObject[key].activityScore * 0.6 + dataObject[key].workScore * 1.4;
+        dataObject[key].totalScore = dataObject[key].activityScore * 1.0 + dataObject[key].workScore * 1.0;
         dataObject[key].maxWork = config.config.maxWorkScore;
         dataObject[key].maxActivity = config.config.maxActivityScore;
         MakeDocxFile(dataObject[key], `${dataObject[key].grade}级 ${dataObject[key].class}班 ${key} ${dataObject[key].studentName}.docx`);
